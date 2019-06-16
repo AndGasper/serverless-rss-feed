@@ -1,0 +1,12 @@
+<sgml version="1.0">
+    <channel>
+        <title>Channel Title</title>
+        <link>https://www.wakemygameup.com</link>
+        <description>Mock abstracted RSS message</description>
+        <item>
+            <title>Alex the Pug</title>
+            <link>https://avatars0.githubusercontent.com/u/24193043?s=460&v=4</link>
+            <description>Pug life</description>
+        </item>
+    </channel>
+</sgml>

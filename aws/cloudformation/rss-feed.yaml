@@ -1,0 +1,157 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Cloudformation template for rss feed
+Resources:
+  FetchSubscriptionsLambdaFunction:
+    # Lambda Fetcher
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: FetchSubscriptions
+      Runtime: nodejs6.10
+      Role: !GetAtt FetchSubscriptionsExecutionRole.Arn
+      Timeout: 5
+      MemorySize: 128
+      Handler: fetchSubscriptions.handler
+      Code:
+        S3Bucket: "rss-feed-lambda-functions"
+        S3Key: "fetchSubscriptions.zip"
+  # IAM Permissions for the lambda function
+  FetchSubscriptionsExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: FetchSubscriptionsRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+            ManagedPolicyArns:
+              - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  # Event definition to fetch subscriptions
+  FetchSubscriptionsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: "Fetch Subscriptions Rule"
+      ScheduleExpresion: "rate(1 minute)"
+      State: "DISABLED"
+      Targets: 
+        -
+          Arn: !GetAtt FetchSubscriptionsLambdaFunction.Arn
+  # Permission for fetch subscriptions event
+  PermissionForScheduledEventToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Principal: "events.amazonaws.com"
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref FetchSubscriptionsLambdaFunction
+      SourceArn: !GetAtt FetchSubscriptionsRule.Arn
+
+  # KinesisFireHose because filters can only point to: kinesis stream | kinesis data firehose stream | lambda function
+  LogDeliveryStream:
+    DependsOn:
+      - LogDeliveryStreamPolicy
+    Type: AWS::KinesisFireHose::DeliveryStream
+    Properties:
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Join
+          - ''
+          - - 'arn:aws:s3:::'
+            - !Ref LogDeliveryS3Bucket
+        BufferingHints:
+          IntervalInSeconds: '60'
+          SizeInMBs: '50'
+          CompressionFormat: UNCOMPRESSED
+          PREFIX: firehose/
+          RoleArn: !GetAtt LogDeliveryRole.Arn
+          ProcessingConfiguration:
+            Enabled: 'false'
+
+
+  # Log bucket to retain log data long term
+  LogDeliveryS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: "fetch-subscriptions-log-archive"
+      VersioningConfiguration:
+        Status: Enabled
+  
+  # Define the delivery IAM role
+  LogDeliveryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                - 'sts:ExternalId': !Ref 'AWS::AcountId'
+
+  
+  # Define the permissions so kinesis can write to the bucket
+  LogDeliveryPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: firehose_delivery_policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:AbortMultipartUpload'
+              - 's3:GetBucketLocation'
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'
+              - 's3:PutObject'
+            Resource:
+              - !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref LogDeliveryS3Bucket
+              - !Join 
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref LogDeliveryS3Bucket
+                  - '*'
+        Roles:
+          - !Ref LogDeliveryRole
+
+
+  FetchSubscriptionsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: FetchSubscriptionsLog
+      RetentionInDays: 365
+
+  # eventSource: events.amazonaws.com, eventname: !Ref FetchSubscriptionsRule 
+  # Define a filter for just the events and lambda function defined within the stack
+  FetchSubscriptionsLogSubscriptionFilter:
+    Type: AWS::Logs:SubscriptionFilter
+    DependsOn: FetchSubscriptionsLogGroup
+    Properties: 
+      RoleArn: !GetAtt CloudWatchToLoggingBucketRole 
+      LogGroupName: !Ref FetchSubscriptionsLogGroup
+      FilterPattern: '{
+        ($.eventSource = "events.amazonaws.com") &&
+        ($.eventname = !Ref FetchSubscriptionsRule)
+      }'
+      DestinationArn: !GetAtt FetchSubscriptionsLoggingBucket
+
+Outputs:
+  CloudWatchLogGroupName:
+    Description: Name of the CloudWatch logs
+    Value: !Ref FetchSubscriptionsLogGroup
+  
+
+

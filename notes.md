@@ -67,8 +67,14 @@ Note: If one is feeling fancy, one can use the cli to perform the upload as well
     - why the sts:externalId? 
     - Reference: [Grant Kinesis Data Firehose Access to an Amazon S3 Destination](https://docs.aws.amazon.com/firehose/latest/dev/controlling-access.html?shortFooter=true#using-iam-s3)
     >  Edit the policy to replace account-id with your AWS account ID. This ensures that only you can request Kinesis Data Firehose to assume the IAM role.
+- [Send the Data from Amazon CloudWatch to Kinesis Data Firehose](https://docs.aws.amazon.com/firehose/latest/dev/cw-to-delivery-stream.html)
 
-
+## Cloudformation
+- Validating the template - example command: 
+```
+aws cloudformation --profile agasper validate-template --template-body file://./aws/cloudformation/rss-feed.yaml
+```
+    - `--profile {profilename}` because I have to be sUfFiCiEnTly pErMisSiOnEd to validate the template (If memory serves, the validation is a little wonky)
 
 ## Miscellaneous 
 - [AWS Security at Scale Logging in AWS Whitepaper](https://d1.awsstatic.com/whitepapers/compliance/AWS_Security_at_Scale_Logging_in_AWS_Whitepaper.pdf)

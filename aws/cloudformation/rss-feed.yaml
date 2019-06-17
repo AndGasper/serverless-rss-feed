@@ -5,6 +5,8 @@ Resources:
   FetchSubscriptionsLambdaFunction:
     # Lambda Fetcher
     Type: AWS::Lambda::Function
+    DependsOn:
+      - FetchSubscriptionsExecutionRole
     Properties:
       FunctionName: FetchSubscriptions
       Runtime: nodejs6.10
@@ -45,17 +47,21 @@ Resources:
   # Permission for fetch subscriptions event
   PermissionForScheduledEventToInvokeLambda:
     Type: AWS::Lambda::Permission
+    DependsOn:
+      - FetchSubscriptionsRule
+      - FetchSubscriptionsLambdaFunction
     Properties:
       Principal: "events.amazonaws.com"
       Action: "lambda:InvokeFunction"
       FunctionName: !Ref FetchSubscriptionsLambdaFunction
       SourceArn: !GetAtt FetchSubscriptionsRule.Arn
 
-  # KinesisFireHose because filters can only point to: kinesis stream | kinesis data firehose stream | lambda function
+  # KinesisFirehose because filters can only point to: kinesis stream | kinesis data firehose stream | lambda function
   LogDeliveryStream:
+    Type: AWS::KinesisFirehose::DeliveryStream
     DependsOn:
-      - LogDeliveryStreamPolicy
-    Type: AWS::KinesisFireHose::DeliveryStream
+      - LogDeliveryS3Bucket
+      - KinesisFireHoseRole
     Properties:
       ExtendedS3DestinationConfiguration:
         BucketARN: !Join
@@ -67,7 +73,7 @@ Resources:
           SizeInMBs: '50'
           CompressionFormat: UNCOMPRESSED
           PREFIX: firehose/
-          RoleArn: !GetAtt LogDeliveryRole.Arn
+          RoleArn: !GetAtt KinesisFireHoseRole.Arn
           ProcessingConfiguration:
             Enabled: 'false'
 
@@ -82,7 +88,7 @@ Resources:
         Status: Enabled
   
   # Define the delivery IAM role
-  LogDeliveryRole:
+  KinesisFireHoseRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -95,12 +101,14 @@ Resources:
             Action: 'sts:AssumeRole'
             Condition:
               StringEquals:
-                - 'sts:ExternalId': !Ref 'AWS::AcountId'
+                - 'sts:ExternalId': !Ref AWS::AccountId
 
   
   # Define the permissions so kinesis can write to the bucket
-  LogDeliveryPolicy:
+  LogDeliveryToS3Policy:
     Type: AWS::IAM::Policy
+    DependsOn:
+      - KinesisFireHoseRole
     Properties:
       PolicyName: firehose_delivery_policy
       PolicyDocument:
@@ -125,8 +133,7 @@ Resources:
                   - !Ref LogDeliveryS3Bucket
                   - '*'
         Roles:
-          - !Ref LogDeliveryRole
-
+          - !Ref KinesisFireHoseRole
 
   FetchSubscriptionsLogGroup:
     Type: AWS::Logs::LogGroup
@@ -137,16 +144,18 @@ Resources:
   # eventSource: events.amazonaws.com, eventname: !Ref FetchSubscriptionsRule 
   # Define a filter for just the events and lambda function defined within the stack
   FetchSubscriptionsLogSubscriptionFilter:
-    Type: AWS::Logs:SubscriptionFilter
-    DependsOn: FetchSubscriptionsLogGroup
+    Type: AWS::Logs::SubscriptionFilter
+    DependsOn:
+      - KinesisFireHoseRole
+      - FetchSubscriptionsLogGroup
     Properties: 
-      RoleArn: !GetAtt CloudWatchToLoggingBucketRole 
+      RoleArn: !GetAtt KinesisFireHoseRole.Arn
       LogGroupName: !Ref FetchSubscriptionsLogGroup
       FilterPattern: '{
         ($.eventSource = "events.amazonaws.com") &&
         ($.eventname = !Ref FetchSubscriptionsRule)
       }'
-      DestinationArn: !GetAtt FetchSubscriptionsLoggingBucket
+      DestinationArn: !GetAtt LogDeliveryS3Bucket.Arn
 
 Outputs:
   CloudWatchLogGroupName:

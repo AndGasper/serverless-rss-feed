@@ -1,6 +1,20 @@
 ---
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Cloudformation template for rss feed
+
+Parameters:
+  ContentBucketArn:
+    Type: String
+    Description: The application's template data store
+Metadata:
+  AWS::Cloudformation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Module 1 Details"
+        Parameters:
+          - TemplateBucket
+
 Resources:
   FetchSubscriptionsLambdaFunction:
     # Lambda Fetcher

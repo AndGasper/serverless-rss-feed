@@ -1,0 +1,16 @@
+{
+    "name": "Subscription Listing",
+    "subscriptions": [
+        {
+            "name": "sample-xml",
+            "description": "Sample XML Data",
+            "url": "http://www.wakemygameup.com/feeds/sample.xml"
+            
+        },
+        {
+            "name": "sample-sgml",
+            "description": "Sample SGML",
+            "path": "http://www.wakemygameup.com/feeds/sample.sgml"
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Bucket for templates
+Resources:
+  TemplateS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: TemplateS3Bucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+
+  TemplateS3AccessPolicyForLambda:
+    Type: AWS::S3::BucketPolicy
+    DependsOn:
+      - TemplateS3Bucket
+    Properties:
+      Bucket:
+        Ref: "TemplateS3Bucket"
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource:
+              - !Sub "arn:aws:s3:::${TemplateBuckets}/*"
+
+    
+    

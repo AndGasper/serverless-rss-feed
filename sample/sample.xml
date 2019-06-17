@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+
+  <channel>
+    <title>WakeMyGameUp Sample Content</title>
+    <link>https://www.wakemygameup.com</link>
+    <description>Sample Content</description>
+    <template>
+      <item>
+        <title>template-path</title>
+        <link>https://www.wakemygameup.com/content/rss-sample.json</link>
+        <description>Sample</description>
+      </item>
+    </template>
+    <content>
+      <title>Content Title</title>
+      <body>Content Body</body>
+    </content>
+  </channel>
+
+</rss>

@@ -76,7 +76,28 @@ aws cloudformation --profile agasper validate-template --template-body file://./
 ```
     - `--profile {profilename}` because I have to be sUfFiCiEnTly pErMisSiOnEd to validate the template (If memory serves, the validation is a little wonky)
 
+
+
+### `vpc.yaml`
+- >  If you specify MapPublicIpOnLaunch, you cannot specify AssignIpv6AddressOnCreation
+    - Reference: [AWS::EC2::Subnet](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ec2-subnet.html#cfn-ec2-subnet-mappubliciponlaunch)
+- `MapPublicIpOnLaunch` is the property that keeps resources launched into the space "private"
+    - Example:
+    ```
+    PrivateSubnet1:
+        Type: AWS::EC2::Subnet
+        Properties:
+          VpcId: !Ref VPC
+          AvailabilityZone: !Select [0, !GetAZs '']
+          CidrBlock: !Ref PrivateSubnet1CIDR
+          MapPublicIpOnLaunch: false
+    ```
+- NAT Gateway
+    - >  A NAT gateway can support up to 55,000 simultaneous connections to each unique destination. This limit also applies if you create approximately 900 connections per second to a single destination (about 55,000 connections per minute). If the destination IP address, the destination port, or the protocol (TCP/UDP/ICMP) changes, you can create an additional 55,000 connections. 
+    - 900 (connections / second ) * (60 second / 1 minute ) = 54,000 connections / 1 minute
+
 ## Miscellaneous 
 - [AWS Security at Scale Logging in AWS Whitepaper](https://d1.awsstatic.com/whitepapers/compliance/AWS_Security_at_Scale_Logging_in_AWS_Whitepaper.pdf)
 - [Error Processor Sample Application for AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/sample-errorprocessor.html?shortFooter=true#sample-errorprocessor-template)
 - [AWS SAM Template for a CloudWatch Events Application](https://docs.aws.amazon.com/lambda/latest/dg/with-scheduledevents-example-use-app-spec.html)
+

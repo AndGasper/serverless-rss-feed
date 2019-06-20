@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const http = requre('http');
 
-exports.handler = (event,  context, callback) => {
+exports.handler = (event, context, callback) => {
     const debugging = {
         'event': event,
         'context': context,
@@ -21,13 +21,22 @@ exports.handler = (event,  context, callback) => {
         };
         let subscriptions;
         // get the published list of subscriptions
-        http.get(options, function(response) {
+        http.get(options, function (response) {
             if (response) {
+                const debugging = {
+                    'context': 'getSubscriptions',
+                    'data': {
+                        'response': response
+                    }
+                };
                 try {
                     // this may be unnecessary, but it might be  worth adding validation of the response around here
                     const subscriptionInformation = JSON.parse(response.body);
+                    debugging.data['subscriptionInformation'] = subscriptionInformation;
                     subscriptionInformation.subscriptions.map(subscription => subscriptions.push(subscription));
-                    
+
+                    console.log('getSubscriptions - debugging', debugging);
+
 
                 } catch (error) {
                     // now what?
@@ -50,22 +59,27 @@ exports.handler = (event,  context, callback) => {
      * @name fetchSubscriptionContent
      * @param {Object} subscription 
      *  - name {String}
-     *  - type {String}
-     *  - path {String}
-     * @description - 
+     *  - description {String}
+     *  - url {String}
+     * @description - Using a subscription make a HTTP request for the listed content
      */
     function fetchSubscriptionContent(subscription) {
         // pick off the path information from the subscription
         const subscriptionSource = new URL(subscription.url);
-        const { path, name, type } = subscription;
         const options = {
             hostname: subscriptionSource.hostname,
             path: subscriptionSource.pathname
         };
-        http.get(options, function(response) {
+        http.get(options, function (response) {
             // domain logic starts kicking in around here
             if (response.status === 200) {
-                
+                const debugging = {
+                    'context': 'fetchSubscriptionContent',
+                    'data': {
+                        'response': response
+                    }
+                };
+                console.log('fetchSubscriptionContent - debugging:', debugging);
             }
         });
         return subscriptionContent;
@@ -76,7 +90,14 @@ exports.handler = (event,  context, callback) => {
         // implicit dependence on subscriptions being iterable having a .length property
         if (subscriptions.length) {
             const subscriptionsContent = subscriptions.map(subscription => fetchSubscriptionContent(subscription));
-            console.log('subscriptionsContent', subscriptionsContent);
+            const debugging = {
+                'context': 'event',
+                'data': {
+                    'subscriptions': subscriptions,
+                    'subscriptionContent': subscriptionsContent
+                }
+            }
+            console.log('event conditional - debugging:', debugging);
         }
     }
 

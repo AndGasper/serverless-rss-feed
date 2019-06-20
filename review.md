@@ -34,9 +34,11 @@ GET: Query -> Handler - Response
 POST: Command -> Handler -> Response 
 ```
 then that's probably why the idea of:
+```
 ---------
 | aether | -event-> lambda -GET-> 
 ----------
+```
 then -GET-> (again) 
 for the template thereby changing the global state makes me raise an eyebrow.
 
@@ -51,3 +53,6 @@ for the template thereby changing the global state makes me raise an eyebrow.
 - Lack of explicit termination protection on the stacks themselves
 - Inconsistent use of resource tags
     - [How should I tag my AWS resources](https://aws.amazon.com/answers/account-management/aws-tagging-strategies/)
+- For the VPC, flow logging?
+- Lack of drift detection for the stack
+- Change sets?

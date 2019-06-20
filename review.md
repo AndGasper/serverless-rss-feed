@@ -42,3 +42,12 @@ for the template thereby changing the global state makes me raise an eyebrow.
 
 
 [AWS CloudFormation S3 Bucket Notifications](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-s3-bucket-notificationconfig.html)
+
+
+
+# Infrastructure
+
+## General
+- Lack of explicit termination protection on the stacks themselves
+- Inconsistent use of resource tags
+    - [How should I tag my AWS resources](https://aws.amazon.com/answers/account-management/aws-tagging-strategies/)

@@ -96,6 +96,10 @@ aws cloudformation --profile agasper validate-template --template-body file://./
     - >  A NAT gateway can support up to 55,000 simultaneous connections to each unique destination. This limit also applies if you create approximately 900 connections per second to a single destination (about 55,000 connections per minute). If the destination IP address, the destination port, or the protocol (TCP/UDP/ICMP) changes, you can create an additional 55,000 connections. 
     - 900 (connections / second ) * (60 second / 1 minute ) = 54,000 connections / 1 minute
 
+
+### CloudFormation
+- CREATE_IN_PROGRESS -> CREATE_FAILED -> ROLLBACK_IN_PROGRESS -> DELETE_SKIPPED
+
 ## Miscellaneous 
 - [AWS Security at Scale Logging in AWS Whitepaper](https://d1.awsstatic.com/whitepapers/compliance/AWS_Security_at_Scale_Logging_in_AWS_Whitepaper.pdf)
 - [Error Processor Sample Application for AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/sample-errorprocessor.html?shortFooter=true#sample-errorprocessor-template)
